@@ -1,0 +1,14 @@
+{
+  "slug": "yangyang-32-soda-fill",
+  "title": "汽檐苏打·装罐净量尾部复称",
+  "direction": "四分位离散、偏度与短装复称",
+  "layout": "ledger",
+  "theme": "姜黄罐标色校样",
+  "recipient": "汽檐苏打灌装班",
+  "work_modules": [
+    "空罐与总重",
+    "四分位形态",
+    "低量与异常复称"
+  ],
+  "follow_latest": false
+}

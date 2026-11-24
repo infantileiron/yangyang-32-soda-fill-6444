@@ -1,0 +1,59 @@
+{
+  "organization": "汽檐苏打灌装班",
+  "tagline": "把罐内短装与整批波动分开",
+  "source": "试灌称重记录（总重、装前空罐重量及罐号）",
+  "record_name": "试灌称重",
+  "algorithm": "以 IQR 与 Bowley 偏度描述净量形态",
+  "formula": "净量=完整试灌后毛重−同一罐装罐前重量。四分位按序位置 (n−1)p 线性插值，IQR=Q3−Q1，四分位离散系数=100×IQR/(Q3+Q1)，Bowley 偏度=(Q3+Q1−2Q2)/IQR。低尾观察线为 Q1−倍数×IQR，另列低于现场目标线的罐号。",
+  "decision_prompt": "应复称哪些罐，是否应先调某个灌装头？",
+  "fields": [
+    {
+      "key": "nozzle",
+      "label": "灌装头",
+      "example": "喷头-2",
+      "type": "text"
+    },
+    {
+      "key": "can",
+      "label": "罐号",
+      "example": "QY-2607-X17",
+      "type": "text"
+    },
+    {
+      "key": "tare",
+      "label": "空罐称重（g）",
+      "example": 15.6,
+      "type": "number",
+      "min": 3,
+      "max": 50
+    },
+    {
+      "key": "gross",
+      "label": "灌后毛重（g）",
+      "example": 339.6,
+      "type": "number",
+      "min": 200,
+      "max": 800
+    }
+  ],
+  "parameters": [
+    {
+      "key": "target",
+      "label": "净量下线（g）",
+      "type": "number",
+      "min": 180,
+      "max": 700,
+      "default": 328,
+      "help": "默认来自试制单 QY-2607。低于此值算短装待复称。"
+    },
+    {
+      "key": "fence",
+      "label": "低尾 IQR 倍数",
+      "type": "number",
+      "min": 0.5,
+      "max": 4,
+      "default": 1.5,
+      "help": "独立于现场净量线计算低尾异常。"
+    }
+  ]
+}
