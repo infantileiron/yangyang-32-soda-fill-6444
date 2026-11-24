@@ -10,7 +10,8 @@ from src.models.base import Session
 from src.models.workflow import Observation
 from src.services.auth import current_user, roles
 from src.services.errors import BusinessError
-from src.services.observations import add_observations, clean_observation, parse_csv
+from src.services.observations import (add_observations, clean_observation, extract_multipart_file,
+                                      parse_csv)
 from src.utils.formatting import csv_text
 
 router = APIRouter(prefix='/api')
@@ -52,7 +53,9 @@ def import_payload(payload, actor):
     rows = parse_csv(payload)
     with Session.begin() as db:
         items = add_observations(db, rows, actor, 'observation.imported')
-        return {'added': len(items), 'skipped': len(rows) - len(items)}
+        skipped = len(rows) - len(items)
+        return {'added': len(items), 'skipped': skipped, 'duplicates': skipped,
+                'existing': skipped, 'total': len(rows)}
 
 
 @router.post('/observations/import')
@@ -62,4 +65,8 @@ async def import_csv(request: Request, user=Depends(editor)):
         if len(raw) + len(chunk) > 512 * 1024:
             raise BusinessError('CSV 文件上限 512 KB', 413)
         raw.extend(chunk)
-    return await run_in_threadpool(import_payload, bytes(raw), user['sub'])
+    payload = bytes(raw)
+    content_type = request.headers.get('content-type', '')
+    if content_type.startswith('multipart/form-data'):
+        payload = extract_multipart_file(payload, content_type)
+    return await run_in_threadpool(import_payload, payload, user['sub'])

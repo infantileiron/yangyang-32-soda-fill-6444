@@ -10,8 +10,8 @@ export function fieldControl(field, defaults = false) {
     control = `<select ${attributes}><option value="">请选择</option>${choices.map(choice => `<option value="${esc(choice)}" ${choice === value ? 'selected' : ''}>${esc(choice)}</option>`).join('')}</select>`;
   } else {
     const range = `${min !== undefined ? `min="${esc(min)}"` : ''} ${max !== undefined ? `max="${esc(max)}"` : ''}`;
-    const inputType = ['integer','number'].includes(type) ? 'number' : type === 'date' ? 'date' : 'text';
-    const step = inputType === 'number' ? `step="${type === 'integer' ? '1' : 'any'}"` : '';
+    const inputType = ['integer','number'].includes(type) ? 'number' : type === 'date' ? 'date' : type === 'datetime' ? 'datetime-local' : 'text';
+    const step = inputType === 'number' ? `step="${type === 'integer' ? '1' : 'any'}"` : inputType === 'datetime-local' ? 'step="1"' : '';
     control = `<input type="${inputType}" ${attributes} ${range} ${step} value="${esc(value)}" placeholder="${esc(example ?? '')}">`;
   }
   return `<label class="field"><span>${esc(label)}</span>${control}${help ? `<small>${esc(help)}</small>` : ''}</label>`;

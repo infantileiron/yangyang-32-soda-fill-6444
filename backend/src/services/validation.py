@@ -1,7 +1,9 @@
 import math
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from src.services.errors import BusinessError
+
+BEIJING_TZ = timezone(timedelta(hours=8))
 
 
 def validated(fields, supplied, *, defaults=False):
@@ -29,6 +31,33 @@ def validated(fields, supplied, *, defaults=False):
                     value = int(value)
             elif kind == 'date':
                 value = date.fromisoformat(str(value)).isoformat()
+            elif kind == 'datetime':
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    timestamp = float(value)
+                    if timestamp > 1e12:
+                        timestamp /= 1000.0
+                    parsed = datetime.fromtimestamp(timestamp, BEIJING_TZ).replace(tzinfo=None)
+                else:
+                    text = str(value).strip().replace('Z', '+00:00')
+                    try:
+                        parsed = datetime.fromisoformat(text)
+                    except ValueError:
+                        parsed = None
+                        for pattern in ('%Y/%m/%d %H:%M:%S', '%Y-%m-%d %H:%M:%S',
+                                        '%Y/%m/%d %H:%M', '%Y-%m-%d %H:%M',
+                                        '%Y/%m/%d', '%Y-%m-%d',
+                                        '%Y年%m月%d日 %H时%M分%S秒',
+                                        '%Y年%m月%d日 %H时%M分',
+                                        '%Y年%m月%d日 %H:%M:%S',
+                                        '%Y年%m月%d日 %H:%M', '%Y年%m月%d日'):
+                            try:
+                                parsed = datetime.strptime(text, pattern)
+                                break
+                            except ValueError:
+                                continue
+                        if parsed is None:
+                            raise
+                value = parsed.isoformat()
             elif kind == 'choice':
                 if value not in field['choices']:
                     raise ValueError

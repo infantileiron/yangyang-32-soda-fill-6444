@@ -23,8 +23,20 @@ export async function resultPage(spec, user, route) {
   if (run.review) review = `<p><b>${run.review.decision === Decision.APPROVED ? '签核通过' : '退回补充'}</b> ${esc(run.review.note)}</p><small>${esc(run.review.reviewer)} · ${timeLabel(run.review.at)}</small>`;
   if (!run.review && user.role === Role.SUPERVISOR) review = `<form id="review-form" data-id="${id}"><label class="field"><span>复核结论</span><select name="decision"><option value="approved">签核通过</option><option value="returned">退回补充</option></select></label><label class="field"><span>复核依据</span><textarea name="note" required minlength="2" maxlength="1000" placeholder="${esc(spec.decision_prompt)}"></textarea></label>${formError}<button class="primary">保存复核</button></form>`;
   const parameters = spec.parameters.map(field => `<li><span>${esc(field.label)}</span><b>${esc(run.parameters[field.key])}</b></li>`).join('');
+  const timeColumn = col => col.key === 'weighed_at' ? {
+    ...col,
+    html: row => row.weighed_at ? `<time datetime="${esc(row.weighed_at)}">${esc(timeLabel(row.weighed_at))}</time>` : '—',
+  } : col;
+  const detailColumns = (data.columns || []).map(timeColumn);
+  const pendingColumns = (data.pending_columns || []).map(timeColumn);
+  const weighingColumns = (data.weighing_columns || []).map(timeColumn);
+  const pending = data.pending?.length ? `<section class="panel pending-panel" data-pending-cans data-quarantine><div class="panel-heading"><h2>待核罐（单独列出，未计入低尾）</h2><span class="status status-returned">${data.pending.length} 罐待核</span></div><div class="panel-body">${table(pendingColumns, data.pending, '没有需要人工核对的罐。')}</div></section>` : '';
+  const detailRows = (data.rows || []).filter(row => row.kind !== '待核');
+  const weighings = data.weighings?.length ? `<section class="panel" data-weighings><details class="weighing-details" open><summary><h2>各罐采用的称重记录（${data.weighings.length}）</h2></summary><div class="panel-body">${table(weighingColumns, data.weighings, '暂无采用的称重记录。')}</div></details></section>` : '';
   return `${head}<div class="split result-summary"><section class="conclusion"><h2>${esc(data.headline)}</h2><p>${esc(data.summary)}</p>${data.metrics.length ? `<dl class="metrics">${data.metrics.map(metric => `<div><dt>${esc(metric.label)}</dt><dd>${esc(formatMetric(metric.value))}${metric.unit ? `<small> ${esc(metric.unit)}</small>` : ''}</dd></div>`).join('')}</dl>` : ''}</section><aside class="method"><h2>本次条件</h2><ul class="parameters">${parameters}</ul>${bars(data.chart)}</aside></div>
-    <section class="panel"><div class="panel-heading"><h2>计算明细</h2><button data-download="/runs/${id}/export">下载 CSV</button></div>${table(data.columns,data.rows,'当前参数下无明细，计算结论保留。')}</section>
+    ${pending}
+    <section class="panel"><div class="panel-heading"><h2>计算明细</h2><button data-download="/runs/${id}/export">下载 CSV</button></div>${table(detailColumns,detailRows,'当前参数下无明细，计算结论保留。')}</section>
+    ${weighings}
     <section class="panel"><div class="panel-heading"><h2>业务签核</h2>${run.review?.decision === Decision.APPROVED ? '<a href="#reports">查看分发 →</a>' : ''}</div><div class="panel-body">${review}</div></section>`;
 }
 

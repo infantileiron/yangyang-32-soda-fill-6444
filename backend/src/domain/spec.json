@@ -5,6 +5,7 @@
   "record_name": "试灌称重",
   "algorithm": "以 IQR 与 Bowley 偏度描述净量形态",
   "formula": "净量=完整试灌后毛重−同一罐装罐前重量。四分位按序位置 (n−1)p 线性插值，IQR=Q3−Q1，四分位离散系数=100×IQR/(Q3+Q1)，Bowley 偏度=(Q3+Q1−2Q2)/IQR。低尾观察线为 Q1−倍数×IQR，另列低于现场目标线的罐号。",
+  "reading_policy": "同一罐号保留原称、复称等全部记录；复称未填空重时沿用该罐原空重，并按实称时间选择最新读数。若最新时刻存在不一致读数，该罐转待核且不进入喷头统计，同喷头其余罐照常计算。",
   "decision_prompt": "应复称哪些罐，是否应先调某个灌装头？",
   "fields": [
     {
@@ -25,7 +26,9 @@
       "example": 15.6,
       "type": "number",
       "min": 3,
-      "max": 50
+      "max": 50,
+      "required": false,
+      "help": "复称记录可留空；同一罐号会沿用最早原称记录的空重。"
     },
     {
       "key": "gross",
@@ -34,6 +37,22 @@
       "type": "number",
       "min": 200,
       "max": 800
+    },
+    {
+      "key": "weighed_at",
+      "label": "实称时间",
+      "example": "2026-09-12T09:15:00+08:00",
+      "type": "datetime",
+      "required": false,
+      "help": "按实际过秤时间判断最新读数；补传晚到的旧记录不会覆盖较新读数。"
+    },
+    {
+      "key": "weighing_type",
+      "label": "称重类型",
+      "example": "复称",
+      "type": "text",
+      "required": false,
+      "help": "可填原称、复称、reweigh 等；留空时按记录时间和导入次序判断。"
     }
   ],
   "parameters": [

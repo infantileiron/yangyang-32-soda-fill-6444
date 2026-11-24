@@ -62,8 +62,18 @@ def run_pending(db):
     if item is None:
         return False
     try:
-        sample = list(db.scalars(select(Observation.payload).where(Observation.id.in_(item.observation_ids))
+        observations = list(db.scalars(select(Observation).where(Observation.id.in_(item.observation_ids))
                                  .order_by(Observation.id)))
+        sample = []
+        for observation in observations:
+            row = dict(observation.payload)
+            row.setdefault('observation_id', observation.id)
+            row.setdefault('record_id', observation.id)
+            row.setdefault('source_id', observation.id)
+            row.setdefault('source_key', observation.source_key)
+            if observation.created_at is not None:
+                row.setdefault('created_at', observation.created_at.isoformat() + 'Z')
+            sample.append(row)
         result = analyze(sample, item.parameters)
         if not {'headline', 'summary', 'metrics', 'columns', 'rows'} <= set(result):
             raise RuntimeError('invalid result schema')
